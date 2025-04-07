@@ -56,6 +56,9 @@ def load_artifacts(run_cfg: RunConfig):
     )
 
     return run_cfg.hookpoints, hookpoint_to_sparse_encode, model, transcode
+    #hookpoint_to_sparse_encode è un dizionario in cui le chiavi sono i punti di attacco dell'autoencoder,  
+    # mentre i valori sono i pesi degli autoencoder sparsi.  
+    #transcode è un booleano che indica se il modello è un transcoder. 
 
 
 def create_neighbours(
@@ -237,7 +240,7 @@ async def process_cache(
 
     await pipeline.run(run_cfg.pipeline_num_proc)
 
-
+#Questa funzione si occupa di calcolare i latenti degli autoencoder sparsi. 
 def populate_cache(
     run_cfg: RunConfig,
     model: PreTrainedModel,
@@ -256,16 +259,17 @@ def populate_cache(
     log_path.mkdir(parents=True, exist_ok=True)
 
     cache_cfg = run_cfg.cache_cfg
+    #Sulla base della configurazione, viene presa una porzione di dataset e la si tokenizza
     tokens = load_tokenized_data(
-        cache_cfg.cache_ctx_len,
+        cache_cfg.cache_ctx_len, #lunghezza del contesto
         tokenizer,
-        cache_cfg.dataset_repo,
-        cache_cfg.dataset_split,
-        cache_cfg.dataset_name,
-        cache_cfg.dataset_column,
-        run_cfg.seed,
+        cache_cfg.dataset_repo, #repository del dataset
+        cache_cfg.dataset_split, #parte del dataset da tokenizzare
+        cache_cfg.dataset_name, #nome del dataset
+        cache_cfg.dataset_column, #colonna del dataset da tokenizzare
+        run_cfg.seed, 
     )
-
+    #Se richiesto elimina il topken di inizio sequenza dai dati
     if run_cfg.filter_bos:
         if tokenizer.bos_token_id is None:
             print("Tokenizer does not have a BOS token, skipping BOS filtering")
@@ -278,6 +282,7 @@ def populate_cache(
             ]
             tokens = truncated_tokens.reshape(-1, cache_cfg.cache_ctx_len)
 
+    #Viene creato un oggetto LatentCache, che si occupa di calcolare i latenti degli autoencoder sparsi. 
     cache = LatentCache(
         model,
         hookpoint_to_sparse_encode,
@@ -287,8 +292,8 @@ def populate_cache(
     )
     cache.run(cache_cfg.n_tokens, tokens)
 
-    if run_cfg.verbose:
-        cache.generate_statistics_cache()
+    #if run_cfg.verbose:
+        #cache.generate_statistics_cache()
 
     cache.save_splits(
         # Split the activation and location indices into different files to make
@@ -351,6 +356,9 @@ async def run(
     hookpoints, hookpoint_to_sparse_encode, model, transcode = load_artifacts(run_cfg)
     tokenizer = AutoTokenizer.from_pretrained(run_cfg.model, token=run_cfg.hf_token)
 
+    #Dopo aver caricato gli artifact, il main verifica che non ci siano hookpoints ridondanti. 
+    #In questo caso, procede con il calcolo dei latenti. 
+
     nrh = assert_type(
         dict,
         non_redundant_hookpoints(
@@ -407,7 +415,8 @@ async def run(
 
 
 if __name__ == "__main__":
-    parser = ArgumentParser()
+    parser = ArgumentParser()  
+    #E' un oggetto che in automatico legge i parametri da riga di comando e va a valorizzare RunConfig
     parser.add_arguments(RunConfig, dest="run_cfg")
     args = parser.parse_args()
 
