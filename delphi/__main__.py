@@ -292,8 +292,8 @@ def populate_cache(
     )
     cache.run(cache_cfg.n_tokens, tokens)
 
-    #if run_cfg.verbose:
-        #cache.generate_statistics_cache()
+    if run_cfg.verbose:
+        cache.generate_statistics_cache()
 
     cache.save_splits(
         # Split the activation and location indices into different files to make
