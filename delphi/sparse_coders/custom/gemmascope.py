@@ -5,21 +5,24 @@ import torch
 import torch.nn as nn
 from huggingface_hub import hf_hub_download
 
-
+# Questo metodo restituisce un dizionario in cui le chiavi sono i punti di attacco dell'autoencoder,
+# mentre i valori sono i pesi degli autoencoder sparsi.  
 def load_gemma_autoencoders(
-    model_path: str,
-    ae_layers: list[int],
-    average_l0s: list[int],
-    sizes: list[str],
-    type: str,
+    model_path: str,          #PATH in cui si trova l'autoencoder
+    ae_layers: list[int],     #lista dei layer a cui si applica l'autoencoder 
+    average_l0s: list[int],   #lista dei valori di L0 che rappresentano la sparsità media dell'autoencoder
+    sizes: list[str],         #lista dei valori di larghezza dell'autoencoder
+    type: str,                #tipo di layer ("res" o "mlp")
     dtype: torch.dtype = torch.bfloat16,
     device: str | torch.device = torch.device("cuda"),
 ) -> dict[str, nn.Module]:
     saes = {}
 
+    #per ogni layer, con un determinato valore di larghezza e sparsità, si carica l'autoencoder
     for layer, size, l0 in zip(ae_layers, sizes, average_l0s):
         path = f"layer_{layer}/width_{size}/average_l0_{l0}"
         sae = JumpReluSae.from_pretrained(model_path, path, device)
+        # Questa è una funzione di HuggingFace che permette di caricare un modello da un repository
 
         sae.to(dtype)
 
@@ -36,6 +39,7 @@ def load_gemma_autoencoders(
         saes[hookpoint] = sae
 
     return saes
+
 
 
 def load_gemma_hooks(
