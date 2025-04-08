@@ -60,15 +60,16 @@ class Explainer(ABC):
             )
 
     def parse_explanation(self, text: str) -> str:
-        try:
-            match = re.search(r"\[EXPLANATION\]:\s*(.*)", text, re.DOTALL)
-            if match:
-                return match.group(1).strip()
-            else:
-                return "Explanation could not be parsed."
-        except Exception as e:
-            logger.error(f"Explanation parsing regex failed: {e}")
-            raise
+        return text
+        #try:
+        #    match = re.search(r"\[EXPLANATION\]:\s*(.*)", text, re.DOTALL)
+        #    if match:
+        #        return match.group(1).strip()
+        #    else:
+        #        return "Explanation could not be parsed."
+        #except Exception as e:
+        #    logger.error(f"Explanation parsing regex failed: {e}")
+        #    raise
 
     def _highlight(self, str_toks: list[str], activations: list[float]) -> str:
         result = ""
