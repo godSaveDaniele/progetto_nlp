@@ -19,6 +19,9 @@ def load_tokenized_data(
     from datasets import load_dataset
     from sparsify.data import chunk_and_tokenize
 
+    #Attenzione modifico il dataset_split
+    dataset_split = "train[:1000000]"
+
     data = load_dataset(dataset_repo, name=dataset_name, split=dataset_split)
     data = data.shuffle(seed)
     tokens_ds = chunk_and_tokenize(
